@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bposa <bposa@student.hive.fi>              +#+  +:+       +#+        */
+/*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/13 10:12:51 by fdessoy-          #+#    #+#             */
-/*   Updated: 2024/08/26 20:29:59 by bposa            ###   ########.fr       */
+/*   Updated: 2024/08/22 18:02:04 by fdessoy-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,9 @@ int	main(int argc, char **argv, char **env)
 	int		status;
 
 	status = 0;
+	(void)argc;
 	(void)argv;
-	if (!env || !*env || argc != 1)
+	if (!env || !*env)
 		return (1);
 	env = add_shell_lvl(env);
 	data = ft_calloc(1, sizeof(t_data));
