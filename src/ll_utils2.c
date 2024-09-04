@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ll_utils2.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bposa <bposa@student.hive.fi>              +#+  +:+       +#+        */
+/*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/07/15 11:35:09 by fdessoy-          #+#    #+#             */
-/*   Updated: 2024/08/25 20:17:33 by bposa            ###   ########.fr       */
+/*   Created: 2024/07/15 11:35:09 by walnaimi          #+#    #+#             */
+/*   Updated: 2024/09/03 19:00:03 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,10 +24,7 @@ char	**env_arr_updater(t_env **env_ll)
 	size = ll_size(env_ll);
 	env = malloc(sizeof(char **) * (size + 1));
 	if (!env)
-	{
-		perror("Failed to allocate memory for data->env\n");
 		return (NULL);
-	}
 	while (i < size)
 	{
 		env[i] = ft_strdup(tmp->content);
@@ -61,14 +58,4 @@ void	free_all_ll(t_env **env_ll)
 {
 	free_ll(*env_ll);
 	free_null(env_ll);
-}
-
-void	lstadd_front(t_env **lst, t_env *new)
-{
-	if (lst)
-	{
-		if (*lst)
-			new -> next = *lst;
-		*lst = new;
-	}
 }

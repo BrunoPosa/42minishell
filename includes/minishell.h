@@ -5,20 +5,13 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/05/13 10:13:01 by fdessoy-          #+#    #+#             */
-/*   Updated: 2024/08/27 00:10:07 by walnaimi         ###   ########.fr       */
+/*   Created: 2024/05/13 10:13:01 by walnaimi          #+#    #+#             */
+/*   Updated: 2024/09/03 20:10:36 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef MINISHELL_H
 # define MINISHELL_H
-
-/*************************************************/
-/* User defined headers **************************/
-/*************************************************/
-# include "libft.h"
-# include "../libft/includes/libft.h" // <- just to silence the nvim errors
-# include "token.h"
 
 /*************************************************/
 /* external libraries ****************************/
@@ -27,17 +20,19 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <sys/wait.h>
+# include <sys/stat.h>
 # include <unistd.h>
 # include <errno.h>
 # include <fcntl.h>
 # include <readline/history.h>
 # include <readline/readline.h>
+# include <stdbool.h>
 
 /*************************************************/
-/* questionable libraries ************************/
+/* User defined headers **************************/
 /*************************************************/
-# include <stdbool.h>
-# include <limits.h>
+# include "libft.h"
+# include "token.h"
 
 /*************************************************/
 /* macros ****************************************/
@@ -45,20 +40,19 @@
 # define ERR "Error\n"
 # define MALLOC "Malloc failure"
 # define EXIT "Exit\n"
-# define NO_EXEC ": command not found"
-# define NO_PERMISSION "Permission denied"
+# define NO_EXEC ": command not found 🙄"
+# define NO_PERMISSION " Permission denied"
 # define HEREDOC_FAILURE "Unable to create temporary for here_doc"
 # define HEREDOC_FAILURE2 "Unable to read temporary for here_doc"
-# define FILE_ERROR "No such file or directory"
-# define SYNTAX "syntax error near unexpected token "
-# define ERR_ARG "Wrong number of arguments, Karen\n"
+# define FILE_ERROR " No such file or directory"
+# define SYNTAX " syntax error near unexpected token "
+# define ERR_ARG "too many arguments"
 # define ERR_EXP "export: not a valid identifier\n"
 # define EXEC_ENV_NULL "envir"
-# define SYNTAX_EXIT ": exit: numeric argument required"
-# define REDIRECT_OUT 222
-# define REDIRECT_IN 111
-# define HERE_DOC 333
-# define APP 444
+# define SYNTAX_EXIT "exit: numeric argument required 😠\n"
+# define NEW_LINE "newline"
+# define CD_ERR "cd: too many arguments"
+# define EXIT_ERR "exit: too many arguments\n"
 # define NO_FILE 100
 # define NULL_LINE 5
 # define DIRECTORY 69
@@ -76,7 +70,7 @@
 /*************************************************/
 /* global variable *******************************/
 /*************************************************/
-extern int	g_exit_code;
+extern int	g_mod;
 
 /*************************************************/
 /* structs ***************************************/
@@ -99,6 +93,7 @@ typedef struct s_data
 	char		*bin;
 	int			index;
 	char		*path;
+	int			last_heredoc_index;
 	char		**binary_paths;
 	int			pipe_fd[2];
 	int			sync_pipe[2];
@@ -114,6 +109,7 @@ typedef struct s_data
 	t_token		*cur_tok;
 	t_token		*prev_token;
 	t_index		indexx;
+	bool		cd_executed;
 	char		**cmd_a;
 	bool		echoed;
 	bool		heredoc_exist;
@@ -129,6 +125,7 @@ typedef struct s_data
 	char		*fin_tok;
 	const char	*deli;
 	bool		ignore_cmd;
+	bool		ignore_redirections;
 	char		*ctoken;
 	char		*cnew_token;
 	char		*str_token;
@@ -136,6 +133,7 @@ typedef struct s_data
 	int			i;
 	int			tok_srt;
 	int			in_quotes;
+	int			is_exit;
 	char		quote_char;
 	size_t		env_len;
 	int			num_of_envs;
@@ -153,15 +151,13 @@ typedef struct s_data
 
 /* in execution.c */
 int		execution(t_data *data, t_env **env_ll);
-int		execution_prepping(t_data *data, t_token *token, t_env **env_ll);
-int		forking(t_data *data, t_env **env_ll, char **all_cmds, pid_t pids);
-void	child_execution(t_data *data, t_env **env_ll, char *instr, int child);
 void	ft_exec(t_data *data, t_env **env_ll, char **cmd_array);
 
 /* in execution2.c */
 bool	builtin_filter(t_token *token, char *command);
 t_token	*find_token_exec(t_token *token, char **array);
-void	ft_builtin_exec(t_data *data, t_token *token, t_env **env_ll);
+void	ft_builtin_exec(t_data *data, t_token *token,
+			t_env **env_ll, int child);
 int		check_path_unset(t_env **env_ll);
 void	handle_pipefd_readend(t_data *data);
 
@@ -169,7 +165,6 @@ void	handle_pipefd_readend(t_data *data);
 int		syntax_check(t_token *token);
 
 /* in redirections.c */
-int		find_redirection(char **array);
 void	redirections_handling(t_data *data, char **array);
 int		here_doc(char *delimiter, t_data *data);
 
@@ -178,19 +173,16 @@ void	input_redirection(t_data *data, char **array);
 void	output_redirection(t_data *data, char **array);
 void	heredoc_redirection(t_data *data, char **array);
 void	append_redirection(t_data *data, char **array);
+void	check_and_handle_redirection(t_data *data, char **array);
 
 /* in execution_utils1.c */
 int		err_msg(char *obj, char *msg, int err_code);
-char	*access_path(char **path, char *cmd);
 void	close_fds(t_data *data);
 void	execution_with_path(t_data *data, char **array, char *path);
 void	execution_absolute_path(t_data *data, char **array);
 
 /* in execution_utils2.c */
-char	**cl_to_array(t_token *token);
-char	*build_instruction(t_token **head);
-int		checking_access(t_data *data, char *instruction);
-char	*get_binary(char *instruction);
+int		find_redirection(t_token *token);
 
 /* in fd_dups.c */
 void	dup_fds(t_data *data, int child, char **array);
@@ -210,13 +202,10 @@ char	*bin_extract(char *path);
 
 /* in utils.c */
 void	free_data(t_data *data, char *path, char **command_array);
-void	free_token(t_token *token);
 int		check_bin_local(char *binary);
 int		check_bin_path(char *binary, char **paths);
-int		is_file(char *binary, char *path);
 
 /* in utils2.c */
-void	malloc_check_message(void *ptr);
 void	free_null(void *ptr);
 void	super_free(t_data *data, t_env **env_ll);
 int		wow_loop(t_data *data, t_env **env_ll);
@@ -236,39 +225,60 @@ char	**env_arr_updater(t_env **env_ll);
 int		ll_size(t_env **env_ll);
 void	free_all_ll(t_env **env_ll);
 char	**add_shell_lvl(char **env);
-void	lstadd_front(t_env **lst, t_env *new);
 
 /* in built_ins.c */
-int		built_ins(t_data *data, t_token *token, t_env **env_ll);
+int		built_ins(t_data *data, t_token *token, t_env **env_ll, int child);
 int		print_env(t_env *env_ll);
 int		print_pwd(void);
-void	get_the_hell_out(t_data *data, t_token *token, t_env **env_ll);
+int		shut_down(t_data *data, t_token *token, t_env **env_ll, int child);
 int		yodeling(t_token *token);
 
 /* in built_ins2.c */
 int		shell_cd(t_token *token, t_data *data);
 int		export(t_token *token, t_env **env_ll);
 int		print_export(t_env **env_ll);
-int		unset(t_token *token, t_env **env_ll);
-void	alphabetical_printer(char **env_array);
+int		unset(t_token *token, t_env **env_ll, t_data *data);
 
-/* signals.c */
-void	handler(int sig);
+/* in exporting.c */
+int		export(t_token *token, t_env **env_ll);
+int		process_token(t_env **env_ll, t_token *tmp_tok);
+int		is_valid_identifier(char *value);
+int		handle_special_cases(t_token *token, t_env **env_ll);
+
+/* in exporting_utils.c */
+int		find_key_in_env(t_env *env_ll, char *token_value, t_env **found_env);
+int		set_key_and_value(t_env *env_node, char *token_value);
+int		check_existing_key(t_env *env_ll, char *token_value, char **out_key);
+void	alphabetical_printer(char **env_array);
+int		print_export(t_env **env_ll);
+
+/* in exporting_utils1.c */
+char	**split_and_validate_token(char *token_value);
+int		ft_ischar(char c);
+int		if_redirection(t_token *token);
+int		update_existing_env(t_env *env_node, char *token_value);
+int		add_new_env_variable(t_env **env_ll, char *token_value);
+
+/* in exporting_utils2.c */
+int		update_content(t_env *env_node, char *token_value);
+char	*extract_value(char *token_value);
+int		compare_keys(t_env *env_ll, char *key);
 
 /* in freeing.c */
-void	*free_arr_retnull(char **array);
 int		free_retstatus(char *array, int status);
 void	free_tokens(t_token *head);
 void	free_gang(t_data *data);
 void	free_my_boi(char **paths);
 
-/* DEPRECATED FUNCTIONS */
-// int		built_in_or_garbage(t_data *data, t_env **env_ll, t_token *token);
-// int		single_execution(t_data *data, t_token *token, t_env **env_ll);
-// void		single_child(t_data *data, t_token *token, t_env **env_ll);
-// int		single_parent(pid_t pid, int status);
-// int 		lonely_execution(t_data *data, t_token *token, t_env **env_ll);
-// int		how_many_children(t_token *token);
-// void		handle_heredoc(t_data *data, char *delimiter);
+/* in freeing2.c */
+void	free_ll(t_env *env_ll);
+void	cleanup_node(t_env *node, char **tmp_array);
+
+/* in ft_listnew.c */
+t_env	*create_node(void);
+int		set_node_content(t_env *node, void *content);
+int		s_node_k(t_env *node, char **tmp_array);
+int		s_node_v(t_env *node, void *content);
+t_env	*ft_listnew(void *content);
 
 #endif

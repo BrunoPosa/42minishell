@@ -1,4 +1,4 @@
-CC = cc # CHANGE THIS
+CC = cc
 
 #Directories
 SRC_DIR = src
@@ -10,7 +10,7 @@ VPATH = src:libft:includes
 O_FLAGS = -lreadline -L${HOME}/.brew/opt/readline/lib
 
 # Compiler flags
-CFLAGS = -Wall -Wextra -Werror -I${HOME}/.brew/opt/readline/include -fsanitize=address #-g
+CFLAGS = -Wall -Wextra -Werror -I${HOME}/.brew/opt/readline/include
 INCFLAGS = -Iincludes -Ilibft/includes
 
 # Main project files
@@ -20,20 +20,29 @@ SRC_FILES = main.c\
 			utils2.c\
 			signals.c\
 			freeing.c\
+			freeing_1.c\
+			freeing_2.c\
+			ft_listnew.c\
 			ll_utils.c\
 			ll_utils2.c\
 			line_handler.c\
 			src/execution/cd.c\
 			src/execution/built_ins.c\
 			src/execution/built_ins2.c\
+			src/execution/echoing.c\
 			src/execution/execution.c\
 			src/execution/execution2.c\
+			src/execution/execution_3.c\
 			src/execution/redirections.c\
 			src/execution/redirections_utils.c\
 			src/execution/fd_dups.c\
 			src/execution/redirect_parse.c\
 			src/execution/execution_utils1.c\
 			src/execution/execution_utils2.c\
+			src/execution/exporting.c\
+			src/execution/exporting_utils.c\
+			src/execution/exporting_utils_1.c\
+			src/execution/exporting_utils_2.c\
 			src/parse/tokenizer.c\
 			src/parse/ft_strtok.c\
 			src/parse/ft_strtok_utils.c\
@@ -69,7 +78,7 @@ LIBFT_LINK = -L$(LIBFT_DIR) -lft
 all: $(NAME)
 	@echo "\033[1;32m[✔] GOOD HEAVENS! LOOK AT THE EXECUTABLE!\033[0m"
 
-%.o: %.c #this part has been changed
+%.o: %.c
 	@$(CC) $(CFLAGS) $(INCFLAGS) $(LIBFT_INC) -g -c $< -o $@
 
 $(NAME): $(OBJ_FILES) $(LIBFT)

@@ -6,11 +6,11 @@
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/23 03:58:57 by walnaimi          #+#    #+#             */
-/*   Updated: 2024/08/23 22:43:09 by walnaimi         ###   ########.fr       */
+/*   Updated: 2024/09/03 18:47:54 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/minishell.h"
+#include "minishell.h"
 
 /**
  * Handles the output redirection token.
@@ -85,7 +85,7 @@ int	handle_heredoc(char *token, t_token *current_token)
 	if (ft_strncmp(token, "<<", 3) == 0 && current_token->in_q == false)
 	{
 		current_token->value = ft_strdup(token);
-		current_token->type = HEREDOC;
+		current_token->type = HDOC;
 		free_null(token);
 		return (0);
 	}

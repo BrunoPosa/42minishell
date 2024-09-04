@@ -6,11 +6,11 @@
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/23 04:35:52 by walnaimi          #+#    #+#             */
-/*   Updated: 2024/08/23 15:49:45 by walnaimi         ###   ########.fr       */
+/*   Updated: 2024/09/03 18:47:54 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/minishell.h"
+#include "minishell.h"
 
 /**
  * Checks if the given token is a pipe and updates
@@ -46,6 +46,7 @@ int	check_redirect(char *token, t_token *current_token, t_data *data)
 {
 	if (ft_redirect_op_check(token, current_token) == 0)
 	{
+		current_token->redirect = true;
 		current_token->echo = false;
 		data->echoed = false;
 		return (0);
@@ -64,6 +65,12 @@ int	check_redirect(char *token, t_token *current_token, t_data *data)
  */
 int	check_command(char *token, t_token *current_token, t_data *data)
 {
+	if (token == NULL || token[0] == '\0')
+		return (1);
+	if (ft_strncmp(token, "..", 3) == 0)
+		return (1);
+	if (ft_strncmp(token, ".", 2) == 0)
+		return (1);
 	if (!data->echoed && !data->ignore_cmd
 		&& (cmd_check(token, current_token, data) == 0))
 	{
@@ -91,6 +98,15 @@ int	check_argument(char *token, t_token *current_token, t_data *data)
 			data->ignore_cmd = true;
 		if (data->echoed == true)
 			current_token->echo = true;
+		if (current_token->id >= 1
+			&& (current_token->prev->type == RED_IN
+				|| current_token->prev->type == RED_OUT
+				|| current_token->prev->type == HDOC
+				|| current_token->prev->type == APPEND))
+		{
+			current_token->type = TFILE;
+			current_token->echo = false;
+		}
 		return (0);
 	}
 	return (1);

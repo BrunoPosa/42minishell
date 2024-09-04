@@ -6,11 +6,11 @@
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/22 14:42:40 by walnaimi          #+#    #+#             */
-/*   Updated: 2024/08/25 00:33:57 by walnaimi         ###   ########.fr       */
+/*   Updated: 2024/09/03 18:47:54 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/minishell.h"
+#include "minishell.h"
 
 /**
  * Adds spaces around a single character in a string if necessary.

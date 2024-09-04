@@ -5,73 +5,65 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/08/09 13:03:21 by fdessoy-          #+#    #+#             */
-/*   Updated: 2024/08/26 18:25:34 by walnaimi         ###   ########.fr       */
+/*   Created: 2024/08/09 13:03:21 by walnaimi          #+#    #+#             */
+/*   Updated: 2024/09/03 18:47:54 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/minishell.h"
+#include "minishell.h"
 
-static int	last_heredoc(char **array)
+static int	last_heredoc(t_token *token)
 {
 	int	i;
 	int	last_index;
 
 	last_index = -1;
 	i = 0;
-	while (array[i])
+	while (token->value)
 	{
-		if (!ft_strncmp(array[i], "<<", 2)
-			&& ft_strlen(array[i]) == 2)
+		if (token->type == HDOC)
 			last_index = i;
+		token = token->next;
 		i++;
 	}
 	return (last_index);
 }
 
-int	find_redirection(char **array)
+int	find_redirection(t_token *token)
 {
-	int	i;
+	t_token	*tmp;
 
-	i = 0;
-	while (array[i])
+	tmp = token;
+	while (tmp->value)
 	{
-		if (!ft_strcmp(array[i], ">>")
-			|| !ft_strcmp(array[i], "<<")
-			|| !ft_strcmp(array[i], ">")
-			|| !ft_strcmp(array[i], "<"))
+		if (search_token_type(tmp, RED_IN)
+			|| search_token_type(tmp, RED_OUT)
+			|| search_token_type(tmp, APPEND)
+			|| search_token_type(tmp, HDOC))
 			return (SUCCESS);
-		i++;
+		tmp = tmp->next;
 	}
+	tmp = NULL;
 	return (FAILURE);
 }
 
 void	redirections_handling(t_data *data, char **array)
 {
-	int	last_heredoc_index;
+	int		last_heredoc_index;
+	t_token	*token;
 
-	last_heredoc_index = last_heredoc(array);
+	token = data->token;
+	last_heredoc_index = last_heredoc(data->token);
 	data->index = 0;
-	while (array[data->index])
+	while (array[data->index] && token->value)
 	{
-		if (!ft_strncmp(array[data->index], "<", 1)
-			&& ft_strlen(array[data->index]) == 1)
-			input_redirection(data, array);
-		else if (!ft_strncmp(array[data->index], ">", 1)
-			&& ft_strlen(array[data->index]) == 1)
-			output_redirection(data, array);
-		else if (!ft_strncmp(array[data->index], ">>", 2)
-			&& ft_strlen(array[data->index]) == 2)
-			append_redirection(data, array);
-		else if (!ft_strncmp(array[data->index], "<<", 2)
-			&& ft_strlen(array[data->index]) == 2)
+		check_and_handle_redirection(data, array);
+		if (!ft_strncmp(array[data->index], "<<", 2) && token->type == HDOC)
 		{
 			if (data->index == last_heredoc_index)
-			{
-				heredoc_redirection(data, array);
 				write(data->sync_pipe[1], "1", 1);
-			}
 		}
+		token = token->next;
 		data->index++;
 	}
 }
@@ -82,7 +74,7 @@ void	process_and_write_input(char *input, int *pipe_fd, t_data *data)
 
 	exp_input = expand_env_variables(input, data);
 	write(pipe_fd[1], exp_input, ft_strlen(exp_input));
-	free_null(exp_input);
+	free_dock((void **)&exp_input);
 }
 
 int	here_doc(char *delimiter, t_data *data)
@@ -92,56 +84,22 @@ int	here_doc(char *delimiter, t_data *data)
 
 	if (pipe(pipe_fd) == -1)
 		exit(err_msg(NULL, "pipe error", 1));
-
 	while (1)
 	{
-		g_exit_code = HEREDOC_SIG;
+		signals(3);
 		input = readline(":3 ");
 		if (!input)
 		{
 			close(pipe_fd[1]);
 			return (pipe_fd[0]);
 		}
-		if (!ft_strncmp(input, delimiter, ft_strlen(delimiter)))
+		if (!ft_strncmp(input, delimiter, ft_strlen(input) + 1))
 			break ;
 		process_and_write_input(input, pipe_fd, data);
 		write(pipe_fd[1], "\n", 1);
 		free_null(input);
 	}
+	free_null(input);
 	close(pipe_fd[1]);
 	return (pipe_fd[0]);
 }
-
-// int	here_doc(char *delimiter, t_data *data)
-// {
-// 	static char *input;
-// 	char *exp_input;
-// 	int pipe_fd[2];
-
-// 	if (pipe(pipe_fd) == -1)
-// 		exit(err_msg(NULL, "pipe error", 1));
-// 	while (1)
-// 	{
-// 		g_exit_code = HEREDOC;
-// 		input = readline("8==D ");
-// 		if (!input)
-// 		{
-// 			close(pipe_fd[1]);
-// 			return (pipe_fd[0]);
-// 		}
-// 		if (!ft_strncmp(input, delimiter, ft_strlen(delimiter)))
-// 			break ;
-// 		if(input[0] == '$')
-// 		{
-// 			exp_input = expand_env_variables(input, data);
-// 			write(pipe_fd[1], exp_input, ft_strlen(exp_input));
-// 			free_null(exp_input);
-// 		}
-// 		else
-// 			write(pipe_fd[1], input, ft_strlen(input));
-// 		write(pipe_fd[1], "\n", 1);
-// 		free_null(input);
-// 	}
-// 	close(pipe_fd[1]);
-// 	return(pipe_fd[0]);
-// }

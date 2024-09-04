@@ -5,14 +5,12 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/08/19 15:28:13 by fdessoy-          #+#    #+#             */
-/*   Updated: 2024/08/26 00:03:12 by walnaimi         ###   ########.fr       */
+/*   Created: 2024/08/19 15:28:13 by walnaimi          #+#    #+#             */
+/*   Updated: 2024/09/03 18:47:54 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/minishell.h"
-
-
+#include "minishell.h"
 
 void	input_redirection(t_data *data, char **array)
 {
@@ -65,19 +63,26 @@ void	heredoc_redirection(t_data *data, char **array)
 {
 	if (array[data->index + 1])
 	{
-		if (data->piped == false)
-		{
-			data->fd_in = here_doc(array[data->index + 1], data);
-			dup2(data->fd_in, STDIN_FILENO);
-			close(data->fd_in);
-		}
-		else if (data->piped == true)
-		{
-			data->fd_in = here_doc(array[data->index + 1], data);
-			dup2(data->fd_in, STDIN_FILENO);
-			close(data->fd_in);
-		}
+		data->fd_in = here_doc(array[data->index + 1], data);
+		dup2(data->fd_in, STDIN_FILENO);
+		close(data->fd_in);
 	}
 	else
 		exit(err_msg("'newline'", SYNTAX, 2));
+}
+
+void	check_and_handle_redirection(t_data *data, char **array)
+{
+	if (!ft_strncmp(array[data->index], "<", 1)
+		&& ft_strlen(array[data->index]) == 1)
+		input_redirection(data, array);
+	else if (!ft_strncmp(array[data->index], ">", 1)
+		&& ft_strlen(array[data->index]) == 1)
+		output_redirection(data, array);
+	else if (!ft_strncmp(array[data->index], ">>", 2)
+		&& ft_strlen(array[data->index]) == 2)
+		append_redirection(data, array);
+	else if (!ft_strncmp(array[data->index], "<<", 2)
+		&& ft_strlen(array[data->index]) == 2)
+		heredoc_redirection(data, array);
 }

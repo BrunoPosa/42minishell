@@ -5,12 +5,41 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/08/23 17:18:12 by fdessoy-          #+#    #+#             */
-/*   Updated: 2024/08/25 21:23:05 by walnaimi         ###   ########.fr       */
+/*   Created: 2024/08/23 17:18:12 by walnaimi          #+#    #+#             */
+/*   Updated: 2024/09/03 18:47:54 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/minishell.h"
+#include "minishell.h"
+
+/**
+ * incorrect_pipe_syntax() checks for syntax errors related to pipes.
+ * It ensures that two consecutive pipes are not used,
+ * and that a pipe is not used as the last character of the command.
+ *
+ * RETURN VALUES:
+ * Upon success, it returns 0. If it fails, it returns 2.
+ */
+static int	incorrect_pipe_syntax(t_token *token)
+{
+	t_token	*head;
+
+	head = token;
+	while (head->value)
+	{
+		if (head->type == PIPE)
+		{
+			if (head->next->value == NULL || head->next->type == PIPE)
+			{
+				if (head->next->value == NULL)
+					return (err_msg(NEW_LINE, SYNTAX, 1));
+				return (err_msg(head->next->value, SYNTAX, 1));
+			}
+		}
+		head = head->next;
+	}
+	return (SUCCESS);
+}
 
 /**
  * incorrect_syntax() checks for specific operators and checks if they're
@@ -30,10 +59,16 @@ static int	incorrect_syntax(t_token *token, t_type token_type)
 			if ((head->type == token_type && head->next->type == token_type)
 				|| (head->type == token_type && head->next->type == RED_IN)
 				|| (head->type == token_type && head->next->type == RED_OUT)
-				|| (head->type == token_type && head->next->type == HEREDOC)
+				|| (head->type == token_type && head->next->type == HDOC)
 				|| (head->type == token_type && head->next->type == APPEND)
-				|| (head->type == token_type && head->next->type == FLAG))
+				|| (head->type == token_type && head->next->type == PIPE)
+				|| (head->type == token_type && head->next->type == FLAG)
+				|| (head->type == token_type && head->next->value == NULL))
+			{
+				if (head->next->value == NULL)
+					return (err_msg(NEW_LINE, SYNTAX, 1));
 				return (err_msg(head->next->value, SYNTAX, 1));
+			}
 		}
 		head = head->next;
 	}
@@ -50,10 +85,11 @@ static int	incorrect_syntax(t_token *token, t_type token_type)
  */
 int	syntax_check(t_token *token)
 {
-	if (incorrect_syntax(token, PIPE) == FAILURE
-		|| incorrect_syntax(token, RED_OUT) == FAILURE
+	if (incorrect_pipe_syntax(token) == FAILURE)
+		return (FAILURE);
+	if (incorrect_syntax(token, RED_OUT) == FAILURE
 		|| incorrect_syntax(token, RED_IN) == FAILURE
-		|| incorrect_syntax(token, HEREDOC) == FAILURE
+		|| incorrect_syntax(token, HDOC) == FAILURE
 		|| incorrect_syntax(token, APPEND) == FAILURE)
 		return (FAILURE);
 	else

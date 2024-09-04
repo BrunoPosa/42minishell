@@ -5,41 +5,15 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/07/16 15:29:42 by fdessoy-          #+#    #+#             */
-/*   Updated: 2024/08/27 00:01:17 by walnaimi         ###   ########.fr       */
+/*   Created: 2024/07/16 15:29:42 by walnaimi          #+#    #+#             */
+/*   Updated: 2024/09/03 19:20:18 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/minishell.h"
-
-char	*access_path(char **path, char *cmd)
-{
-	int		i;
-	char	*curr_path;
-
-	i = 0;
-	while (path[i])
-	{
-		curr_path = ft_strsjoin(path[i], cmd, '/');
-		if (!access(curr_path, F_OK))
-		{
-			if (!access(curr_path, X_OK))
-			{
-				free_array(path);
-				return (curr_path);
-			}
-			ft_putstr_fd("Command not found: ", 2);
-			ft_putendl_fd(cmd, 2);
-		}
-		free(curr_path);
-		i++;
-	}
-	return (NULL);
-}
+#include "minishell.h"
 
 /**
 * This is our standard error printer.
-* NEVER NULL THE FIRST PARAMETER!
 */
 int	err_msg(char *obj, char *msg, int err_code)
 {
@@ -71,9 +45,39 @@ void	close_fds(t_data *data)
 		close(data->sync_pipe[0]);
 }
 
+void	handle_cat_without_args(t_data *data, char **array)
+{
+	int	fd;
+
+	if (!ft_strncmp(array[0], "cat", 4) && array[1] == NULL
+		&& data->redirections == false)
+	{
+		if (!isatty(STDIN_FILENO))
+		{
+			fd = open("/dev/tty", O_RDONLY);
+			if (fd == -1)
+				exit(1);
+			if (dup2(fd, STDIN_FILENO) == -1)
+			{
+				close(fd);
+				exit(1);
+			}
+			close(fd);
+		}
+	}
+}
+
 void	execution_with_path(t_data *data, char **array, char *path)
 {
-	g_exit_code = EXEC_SIG;
+	struct stat	sb;
+
+	if (stat(array[0], &sb) == 0 && S_ISDIR(sb.st_mode))
+	{
+		err_msg(array[0], " is a directory", 126);
+		free_data(data, path, array);
+		exit(126);
+	}
+	handle_cat_without_args(data, array);
 	if (execve(path, array, data->env) == -1)
 	{
 		err_msg(array[0], NO_EXEC, 127);
@@ -84,6 +88,15 @@ void	execution_with_path(t_data *data, char **array, char *path)
 
 void	execution_absolute_path(t_data *data, char **array)
 {
+	struct stat	sb;
+
+	if (stat(array[0], &sb) == 0 && S_ISDIR(sb.st_mode))
+	{
+		err_msg(array[0], " is a directory", 126);
+		free_data(data, NULL, array);
+		exit(126);
+	}
+	handle_cat_without_args(data, array);
 	if (execve(array[0], array, data->env) == -1)
 	{
 		err_msg(array[0], NO_EXEC, 127);

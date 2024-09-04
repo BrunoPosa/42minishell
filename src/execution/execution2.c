@@ -5,35 +5,24 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/08/22 13:30:29 by fdessoy-          #+#    #+#             */
-/*   Updated: 2024/08/25 23:34:26 by walnaimi         ###   ########.fr       */
+/*   Created: 2024/08/22 13:30:29 by walnaimi          #+#    #+#             */
+/*   Updated: 2024/09/03 18:47:54 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/minishell.h"
+#include "minishell.h"
 
 /**
-At first, the user will give us a command such as:
-
-shell %> ls -la | echo test > outfile | cat outfile
-
-In our parsing we will take care of stripping everything that is unnecessary
-and take care of redirections accordingly. Every command between pipes will
-be sent down to the children processes that will execute them depending if 
-they are built-ins or other commands. In the previous example, echo is a 
-built-in and I need to execute it in a different manner. For the execution
-of built-ins I have done everything with a linked list type t_token that
-parses out empty spaces and takes mostly strings and has a pointer to the 
-value of the string called value in the node.
-
-Therefore, at the doorstep of execution, the tokens will contain the full
-instruction "ls -la | echo test > outfile | cat outfile" where the nodes 
-will contain "ls, -la, |, echo, test, >, outfile, |, cat, and outfile". 
-My parsed array will have only what the child is supposed to execute.
-So, in the second child, which contains a builtin, we will see:
-
-arr[0] = echo 
-arr[1] = test
+ * Checks if the given command exists in the linked list.
+ *
+ * @param token the head of the linked list
+ * @param command the command to search for
+ *
+ * @return true if the command exists in the linked list, false otherwise
+ *
+ * The function walks through the linked list and checks if the command matches
+ * one of the tokens in the list. If it does, it returns true. If it doesn't
+ * find any match, it returns false.
  */
 bool	builtin_filter(t_token *token, char *command)
 {
@@ -55,37 +44,54 @@ bool	builtin_filter(t_token *token, char *command)
 
 t_token	*find_token_exec(t_token *token, char **array)
 {
-	int		i;
-	t_token	*tmp;
+	int			i;
+	t_token		*tmp;
 
 	i = 0;
-	tmp = token;
 	while (array[i])
 	{
-		while (tmp->next != NULL)
+		tmp = token;
+		while (tmp && tmp->next != NULL)
 		{
 			if (!ft_strncmp(array[i], tmp->value, ft_strlen(array[i]))
 				&& tmp->type == BUILTIN)
+			{
+				tmp = search_backwards_for_builtin(tmp, array[i]);
 				return (tmp);
+			}
 			tmp = tmp->next;
 		}
 		i++;
 	}
-	tmp = NULL;
 	return (NULL);
 }
 
-void	ft_builtin_exec(t_data *data, t_token *token, t_env **env_ll)
+/**
+ * Handles the execution of built-in commands. It calls the built_ins() function
+ * to execute the command and then exits the shell with the returned status.
+ *
+ * @param data the data structure holding the shell state
+ * @param token the head of the linked list of tokens
+ * @param env_ll the head of the environment linked list
+ */
+void	ft_builtin_exec(t_data *data, t_token *token, t_env **env_ll, int child)
 {
 	int	status;
 
 	status = 0;
 	if (token == NULL)
 		exit(status);
-	status = built_ins(data, token, env_ll);
+	status = built_ins(data, token, env_ll, child);
 	exit(status);
 }
 
+/**
+ * Checks if the PATH environment variable is set in the environment linked list.
+ *
+ * @param env_ll the head of the environment linked list
+ *
+ * @return SUCCESS if the PATH variable is set, FAILURE otherwise
+ */
 int	check_path_unset(t_env **env_ll)
 {
 	t_env	*tmp;
@@ -100,6 +106,15 @@ int	check_path_unset(t_env **env_ll)
 	return (FAILURE);
 }
 
+/*
+ * Handles the read end of the pipe after forking a new process.
+ *
+ * Closes the write end of the pipe and the previous read end of the pipe if
+ * it is not the first command in the pipeline. Then assigns the read end of
+ * the pipe to the read_end field of the data structure.
+ * 
+ * @param data the data structure holding the shell state
+ */
 void	handle_pipefd_readend(t_data *data)
 {
 	close(data->pipe_fd[1]);

@@ -6,24 +6,24 @@
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/13 12:23:49 by walnaimi          #+#    #+#             */
-/*   Updated: 2024/08/26 23:59:42 by walnaimi         ###   ########.fr       */
+/*   Updated: 2024/09/03 18:56:16 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/minishell.h"
+#include "minishell.h"
 
 int	total_env_len(t_env *head)
 {
 	int		total_length;
-	t_env	*current;
+	t_env	*cur;
 
 	total_length = 0;
-	current = head;
-	while (current != NULL)
+	cur = head;
+	while (cur != NULL)
 	{
-		if (current->value)
-			total_length += strlen(current->value);
-		current = current->next;
+		if (cur->value != NULL)
+			total_length += strlen(cur->value);
+		cur = cur->next;
 	}
 	return (total_length);
 }
@@ -41,47 +41,29 @@ void	setup(t_data *data)
 	data->env_len = total_env_len(data->envll);
 	if (data->status == 963)
 		data->status = 2;
-	else if (data->no_cmd_flag == 1)
-		data->status = 127;
-}
-
-int	token_only_arg(t_data *data)
-{
-	t_token	*head;
-	int		expect_command;
-
-	head = data->token;
-	expect_command = 1;
-	data->no_cmd_flag = 0;
-	while (head)
-	{
-		if (head->type == PIPE)
-		{
-			expect_command = 1;
-			data->no_cmd_flag = 1;
-		}
-		else if (expect_command && head->type == ARG)
-			data->no_cmd_flag = 1;
-		else if (head->type == COMMAND || head->type == BUILTIN)
-		{
-			expect_command = 0;
-			data->no_cmd_flag = 0;
-		}
-		head = head->next;
-	}
-
-	return (SUCCESS);
+	if (g_mod == 1)
+		data->status = 130;
 }
 
 /**
- * Here we are prompting the user to give input with the readline() and
- * tokenizing afterwards. After tokenizing, we are using the tokens to check
- * for invalid inputs. More information in closed issue #19 in the repository.
+ * Reads a line from the user and sets up the data structure.
+ * 
+ * This function will read a line from the user using readline(),
+ * add it to the history list if it is not empty, and set up the
+ * tokenization process. If the line is empty, it will return
+ * NULL_LINE. If the line is not empty, it will tokenize the line
+ * and check for syntax errors. If there are any syntax errors,
+ * it will return 2. If there are no syntax errors, it will set up
+ * the tokenization process and return SUCCESS.
+ * 
+ * @param data A pointer to a t_data structure containing
+ * the line to be tokenized.
+ * 
+ * @return 0 on successful tokenization, 2 otherwise.
  */
 int	sniff_line(t_data *data)
 {
-	data->line_read = readline("\e[1;45m[I can't believe this is"
-			" not shell]\e[0m ");
+	data->line_read = readline("[ft_putchar] ");
 	if (!data->line_read)
 		return (NULL_LINE);
 	if (*data->line_read)
@@ -90,16 +72,14 @@ int	sniff_line(t_data *data)
 	line_tokenization(data);
 	if (data->status == 963)
 		return (free_retstatus(data->line_read, 963));
-	data->status = 0;
-	free(data->line_read);
+	g_mod = 0;
+	free_null(data->line_read);
 	if (syntax_check(data->token) == FAILURE)
 	{
 		data->status = 2;
 		return (2);
 	}
-	token_only_arg(data);
 	data->piped = false;
-	data->heredoc_exist = false;
 	if (count_token(data->token, PIPE) >= 1)
 		data->piped = true;
 	return (SUCCESS);

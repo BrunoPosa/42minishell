@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/08/13 10:03:43 by fdessoy-          #+#    #+#             */
-/*   Updated: 2024/08/26 20:52:12 by walnaimi         ###   ########.fr       */
+/*   Created: 2024/08/13 10:03:43 by walnaimi          #+#    #+#             */
+/*   Updated: 2024/09/03 17:09:32 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,19 +19,12 @@ void	free_null(void *ptr)
 	return ;
 }
 
-void	malloc_check_message(void *ptr)
-{
-	if (!ptr)
-		exit(err_msg(NULL, MALLOC, -1));
-	else
-		return ;
-}
-
 void	super_free(t_data *data, t_env **env_ll)
 {
 	free_null(data->fin_tok);
 	free_array(data->binary_paths);
 	free_all_ll(env_ll);
+	free(data->line_read);
 	free(data);
 }
 
@@ -40,17 +33,24 @@ int	wow_loop(t_data *data, t_env **env_ll)
 	int	status;
 
 	status = 0;
+	g_mod = 0;
 	while (666)
 	{
+		signals(1);
+		find_bin(env_ll, data);
 		status = sniff_line(data);
 		if (status == NULL_LINE)
 		{
-			printf("bye bye!\n");
+			g_mod = 0;
+			status = 0;
+			printf("OUCH!!\n");
 			break ;
 		}
 		else if (status == 0)
 			execution(data, env_ll);
+		status = data->status;
 		free_gang(data);
+		data->status = status;
 	}
 	return (status);
 }

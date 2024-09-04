@@ -5,12 +5,12 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/07/22 13:19:55 by fdessoy-          #+#    #+#             */
-/*   Updated: 2024/08/23 13:54:54 by walnaimi         ###   ########.fr       */
+/*   Created: 2024/07/22 13:19:55 by walnaimi          #+#    #+#             */
+/*   Updated: 2024/09/03 18:47:54 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/minishell.h"
+#include "minishell.h"
 
 /**
  * Retrieves the value associated with a 

@@ -5,30 +5,37 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/05/15 14:18:24 by fdessoy-          #+#    #+#             */
-/*   Updated: 2024/08/25 22:56:24 by walnaimi         ###   ########.fr       */
+/*   Created: 2024/08/29 10:53:41 by walnaimi          #+#    #+#             */
+/*   Updated: 2024/09/03 18:47:54 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/minishell.h"
+#include "minishell.h"
 
-/* This part is taking the tokens and taking the argument just after it. */
-int	built_ins(t_data *data, t_token *token, t_env **env_ll)
+/**
+ * Checks if the command is a built-in command and
+ * executes it directly. Only one command can be
+ * executed at a time.
+ *
+ * @param data		minishell data
+ * @param token		token to be processed
+ * @param env_ll	environment linked list
+ * @return			status of the built-in command
+ */
+int	built_ins(t_data *data, t_token *token, t_env **env_ll, int child)
 {
 	int	status;
 
 	status = 0;
-	if(token->value == NULL)
-		return (status);
-	data->home_pwd = get_home((*env_ll));
 	if (token->value == NULL)
 		return (status);
+	data->home_pwd = get_home((*env_ll));
 	if (!ft_strncmp(token->value, "env", 4))
 		status = print_env((*env_ll));
 	else if (!ft_strncmp(token->value, "pwd", 4))
 		status = print_pwd();
 	else if (!ft_strncmp(token->value, "exit", 5))
-		get_the_hell_out(data, token, env_ll);
+		status = shut_down(data, token, env_ll, child);
 	else if (!ft_strncmp(token->value, "echo", 5))
 		status = yodeling(token);
 	else if (!ft_strncmp(token->value, "cd", 3))
@@ -36,15 +43,20 @@ int	built_ins(t_data *data, t_token *token, t_env **env_ll)
 	else if (!ft_strncmp(token->value, "export", 7))
 		status = export(token, env_ll);
 	else if (!ft_strncmp(token->value, "unset", 6))
-		status = unset(token, env_ll);
+		status = unset(token, env_ll, data);
 	else
-		return(err_msg(token->value, NO_EXEC, 127));
+		status = handle_non_builtin(token);
+	data->status = status;
 	return (status);
 }
 
-/* The printing of the environment changes in conformity to the use of
-export and unset. The command 'env' itself does not take arguments.
-e.g. $> env || $> pwd (no white spaces or anything like caps)*/
+/**
+ * Prints out the environment variables in the format
+ * "VARIABLE_NAME=variable_value"
+ *
+ * @param env_ll	environment linked list
+ * @return		status of the operation
+ */
 int	print_env(t_env *env_ll)
 {
 	t_env	*tmp;
@@ -54,13 +66,18 @@ int	print_env(t_env *env_ll)
 	tmp = env_ll;
 	while (tmp)
 	{
-		ft_printf("%s\n", tmp->content);
+		if (ft_strchr(tmp->content, '='))
+			ft_putendl_fd(tmp->content, 1);
 		tmp = tmp->next;
 	}
-	env_ll = tmp;
 	return (SUCCESS);
 }
 
+/**
+ * Prints the current working directory.
+ *
+ * @return		status of the operation
+ */
 int	print_pwd(void)
 {
 	char	*pwd;
@@ -68,95 +85,64 @@ int	print_pwd(void)
 	pwd = getcwd(NULL, 0);
 	if (!pwd)
 		return (FAILURE);
-	printf("%s\n", pwd);
+	ft_putendl_fd(pwd, 1);
 	free_null(pwd);
 	return (SUCCESS);
 }
 
-/* This is the exit function, it needs to take, if inputted,
-an exit code that was manually inserted after exit */
-void	get_the_hell_out(t_data *data, t_token *token, t_env **env_ll)
+/**
+ * Converts the exit status from a string to an integer, performs cleanup,
+ * and exits with the specified status.
+ *
+ * @param data		data structure holding the program state
+ * @param env_ll	environment linked list
+ * @param status_str	string containing the status to exit with
+ */
+int	exit_with_status(t_data *data, t_env **env_ll, const char *status_str)
 {
-	int status;
-	status = 0;
-	free_all_ll(env_ll);
-	ft_printf("exit\n");
+	int	status;
+
+	status = ft_atoi(status_str);
+	free_before_exit(data, env_ll);
+	return (status);
+}
+
+/**
+ * Handles the exit built-in command. If the command is not provided with any
+ * arguments, it just exits the shell.
+ * If the command is provided with an argument,
+ * it will exit the shell with the provided value as the exit status.
+ *
+ * @param data		data structure holding the program state
+ * @param token		token list
+ * @param env_ll	environment linked list
+ * @return			status of the operation
+ */
+int	shut_down(t_data *data, t_token *token, t_env **env_ll, int child)
+{
+	int	status;
+
 	if (token->next != NULL && token->next->value != NULL)
 	{
-		if (ft_isalpha_str(token->next->value))
+		if (token->next->type == PIPE || child > 0)
+			return (0);
+		if (!ft_isnum_str(token->next->value))
 		{
-			status = 2;
-			err_msg(token->next->value, SYNTAX_EXIT, status);
-			free_gang(data);
-			exit(status);
+			printf("%s", SYNTAX_EXIT);
+			free_before_exit(data, env_ll);
+			exit(2);
 		}
-		status = ft_atoi(token->next->value);
-		free_gang(data);
+		else if (token->next->next->value != NULL)
+		{
+			printf("%s", EXIT_ERR);
+			return (1);
+		}
+		printf("bye bye👋!\n");
+		status = exit_with_status(data, env_ll, token->next->value);
 		exit(status);
 	}
-	free_gang(data);
+	if (child == 0)
+		printf("bye bye👋!\n");
+	free_before_exit(data, env_ll);
 	exit(data->status);
-}
-
-int	handle_flag_type(t_token *head)
-{
-	head = head->next;
-	while (head->type == FLAG)
-	{
-		head = head->next;
-		if (head->value == NULL)
-			return (SUCCESS);
-	}
-	while (head->value != NULL && head->value[0] == '\0')
-		head = head->next;
-	while (head != NULL)
-	{
-		if (head->value != NULL && head->value[0] != '\0')
-		{
-			if (head->type == RED_IN || head->type == RED_OUT
-				|| head->type == APP || head->type == HEREDOC)
-				break ;
-			printf("%s", head->value);
-		}
-		head = head->next;
-		if (head != NULL && head->value != NULL && head->value[0] != '\0')
-			printf(" ");
-	}
-	return (SUCCESS);
-}
-
-int	handle_arg_type(t_token *head)
-{
-	head = head->next;
-	while (head->value != NULL && head->value[0] == '\0')
-		head = head->next;
-	while (head != NULL)
-	{
-		if (head->value != NULL && head->value[0] != '\0')
-		{
-			if (head->type == RED_IN || head->type == RED_OUT
-				|| head->type == APP || head->type == HEREDOC)
-				break ;
-			printf("%s", head->value);
-		}
-		head = head->next;
-		if (head != NULL && head->value != NULL && head->value[0] != '\0')
-			printf(" ");
-	}
-	printf("\n");
-	return (SUCCESS);
-}
-
-int	yodeling(t_token *token)
-{
-	t_token	*head;
-
-	head = token;
-	if (head->next->value == NULL)
-		return (printf("\n"), SUCCESS);
-	if (head->next->type == FLAG)
-		return (handle_flag_type(head));
-	if (head != NULL && head->next != NULL && head->next->type == ARG)
-		return (handle_arg_type(head));
-	return (FAILURE);
 }

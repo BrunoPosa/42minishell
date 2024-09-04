@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utils.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bposa <bposa@student.hive.fi>              +#+  +:+       +#+        */
+/*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/07/24 11:23:58 by fdessoy-          #+#    #+#             */
-/*   Updated: 2024/08/22 23:34:32 by bposa            ###   ########.fr       */
+/*   Created: 2024/07/24 11:23:58 by walnaimi          #+#    #+#             */
+/*   Updated: 2024/09/03 16:45:09 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,21 +35,6 @@ void	free_data(t_data *data, char *path, char **command_array)
 	}
 }
 
-void	free_token(t_token *token)
-{
-	t_token	*tmp;
-
-	while (token != NULL)
-	{
-		tmp = token;
-		token = token->next;
-		free(tmp);
-		tmp = NULL;
-	}
-	free(token);
-	token = NULL;
-}
-
 /**
  * check_bin_local() searches for a binary in the current working
  * directory. 
@@ -70,15 +55,16 @@ int	check_bin_local(char *binary)
 	{
 		if (!access(binary_with_path, X_OK))
 		{
-			free(binary_with_path);
-			free(cwd);
+			free_null(binary_with_path);
+			free_null(cwd);
 			return (EXECUTABLE);
 		}
-		free(cwd);
+		free_null(cwd);
+		free_null(binary_with_path);
 		return (FILE);
 	}
-	free(cwd);
-	free(binary_with_path);
+	free_null(cwd);
+	free_null(binary_with_path);
 	return (FAILURE);
 }
 
@@ -105,35 +91,14 @@ int	check_bin_path(char *binary, char **paths)
 		{
 			if (!access(token_with_path, X_OK))
 			{
-				free(token_with_path);
+				free_null(token_with_path);
 				return (EXECUTABLE);
 			}
-			free(token_with_path);
+			free_null(token_with_path);
 			return (FILE);
 		}
-		free(token_with_path);
+		free_null(token_with_path);
 		i++;
-	}
-	return (FAILURE);
-}
-
-/**
- * Still no use for this one yet, I imagine that this will be for absolute path
- */
-int	is_file(char *binary, char *path)
-{
-	char	*file_with_path;
-
-	file_with_path = ft_strsjoin(path, binary, '/');
-	if (!access(file_with_path, F_OK))
-	{
-		if (!access(file_with_path, X_OK))
-		{
-			free(file_with_path);
-			return (EXECUTABLE);
-		}
-		free(file_with_path);
-		return (FILE);
 	}
 	return (FAILURE);
 }

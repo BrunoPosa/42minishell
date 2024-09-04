@@ -6,11 +6,11 @@
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/23 04:40:41 by walnaimi          #+#    #+#             */
-/*   Updated: 2024/08/23 23:00:06 by walnaimi         ###   ########.fr       */
+/*   Updated: 2024/09/03 18:47:54 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/minishell.h"
+#include "minishell.h"
 
 /**
  * Checks if the given token is a built-in command.
@@ -59,6 +59,7 @@ int	check_echo_flag(char *token, t_token *current_token, t_data *data)
 		if (token[i] == '\0')
 		{
 			current_token->type = FLAG;
+			current_token->echo = true;
 			current_token->value = ft_strdup(token);
 			free_null(token);
 			return (0);
@@ -79,7 +80,7 @@ int	check_echo_flag(char *token, t_token *current_token, t_data *data)
 int	check_flag(char *token, t_token *current_token, t_data *data)
 {
 	if (current_token->prev != NULL && !data->echoed
-		&& (current_token->prev->type == COMMAND
+		&& (current_token->prev->type == EXEC
 			|| current_token->prev->type == FLAG) && token[0] == '-')
 	{
 		current_token->type = FLAG;

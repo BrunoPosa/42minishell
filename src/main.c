@@ -5,15 +5,27 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/05/13 10:12:51 by fdessoy-          #+#    #+#             */
-/*   Updated: 2024/08/22 18:02:04 by fdessoy-         ###   ########.fr       */
+/*   Created: 2024/08/29 10:53:35 by walnaimi          #+#    #+#             */
+/*   Updated: 2024/09/02 18:28:41 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int	g_exit_code = 0;
+int	g_mod = 0;
 
+/**
+ * The main function of the minishell program.
+ *
+ * This function takes in the program arguments and the environment variables,
+ * and starts the minishell program loop.
+ *
+ * @param argc The number of arguments passed to the program.
+ * @param argv The array of arguments passed to the program.
+ * @param env The array of environment variables.
+ *
+ * @return The exit status of the program.
+ */
 int	main(int argc, char **argv, char **env)
 {
 	t_data	*data;
@@ -21,7 +33,8 @@ int	main(int argc, char **argv, char **env)
 	int		status;
 
 	status = 0;
-	(void)argc;
+	if (argc != 1)
+		exit(err_msg(NULL, ERR_ARG, 1));
 	(void)argv;
 	if (!env || !*env)
 		return (1);

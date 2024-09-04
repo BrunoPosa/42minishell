@@ -6,11 +6,11 @@
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/08 14:53:29 by walnaimi          #+#    #+#             */
-/*   Updated: 2024/08/25 23:35:34 by walnaimi         ###   ########.fr       */
+/*   Updated: 2024/09/03 18:47:54 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/minishell.h"
+#include "minishell.h"
 
 /**
  * This function first checks if the `env_value` is not `NULL`.
@@ -52,7 +52,7 @@ void	copy_env_value(char *result, const char *env_value, t_index *num)
  */
 void	setup_env_variables(const char *input, t_data *data)
 {
-	data->num_of_envs = count_matching_keys(data->envll, input);
+	data->num_of_envs = count_matching_keys(input);
 	if (data->num_of_envs == 0)
 		data->num_of_envs = 1;
 	data->s_quote_o = 0;

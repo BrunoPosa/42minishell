@@ -6,7 +6,7 @@
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/15 16:27:10 by walnaimi          #+#    #+#             */
-/*   Updated: 2024/08/26 23:59:43 by walnaimi         ###   ########.fr       */
+/*   Updated: 2024/09/03 20:11:17 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,10 @@
 # define TOKEN_H
 
 # include "minishell.h"
-# include <stdbool.h>
 
 typedef struct s_data	t_data;
 typedef struct s_env	t_env;
+
 /*******************************************
  * enum assign types
  * 1. echo,cd,pwd...
@@ -32,19 +32,19 @@ typedef struct s_env	t_env;
  * 10. append (>>)
  * 404. not found (default).
  ********************************************/
-
 typedef enum e_type
 {
 	BUILTIN = 1,
-	COMMAND = 2,
+	EXEC = 2,
 	ARG = 3,
 	PIPE = 4,
 	FLAG = 5,
 	ENVVAR = 6,
 	RED_IN = 7,
 	RED_OUT = 8,
-	HEREDOC = 9,
+	HDOC = 9,
 	APPEND = 10,
+	TFILE = 11,
 	UNKNOWN = 404,
 }			t_type;
 
@@ -57,7 +57,6 @@ typedef enum e_type
  * next = points to the next token.
  * prev = points to the previous token.
  *******************************************/
-
 typedef struct s_token
 {
 	t_type			type;
@@ -67,6 +66,7 @@ typedef struct s_token
 	bool			in_q;
 	bool			empty;
 	bool			echo;
+	bool			redirect;
 	struct s_token	*next;
 	struct s_token	*prev;
 }		t_token;
@@ -94,14 +94,26 @@ typedef struct s_index
 	int	j;
 }	t_index;
 
+t_token	*search_backwards_for_builtin(t_token *start, const char *cmd);
+void	free_before_exit(t_data *data, t_env **env_ll);
+int		handle_non_builtin(t_token *token);
+void	free_all_resources(t_env **env_ll, t_data *data);
+void	free_all_with_cmd(t_env **env_ll, t_data *data, char **cmd_with_args);
+void	free_dock(void **ptr);
 char	*ft_strncpy(char *s1, const char *s2, int n);
+int		ft_isnum_str(const char *str);
+void	signals(int sig);
+int		trip_execution_prepping(t_data *data, t_token *token, t_env **env_ll);
+int		tri_forking(t_data *data, t_env **env_ll, char ***all_cmds, pid_t pids);
+void	tri_child_exe(t_data *data, t_env **env_ll, char **cmd, int child);
+char	***token_to_array(t_token *token);
+char	***free_cmd_array(char ***cmd_array);
 
 //* ---------------------------------------------- */
 //              src/parse/helper.c                 //
 //* ---------------------------------------------- */
 t_token	*find_token(t_token *token, t_type type);
 int		search_token_type(t_token *token, t_type type);
-int		ft_isalpha_str(const char *str);
 
 //* ---------------------------------------------- */
 //              src/parse/init_token.c             //
@@ -178,11 +190,7 @@ void	handle_env_var(const char *str, t_index *num, t_data *data, char *res);
 //*----------------------------------------------*/
 //              src/parse/setup_env.c            //
 //*----------------------------------------------*/
-int		count_matching_keys(t_env *env_list, const char *input);
-void	skip_non_word_characters(const char **ptr);
-char	*extract_word(const char **ptr, int max_word_size);
-int		is_key_in_list(t_env *head, const char *word);
-int		ft_strccmp(char *s1, const char *s2);
+int		count_matching_keys(const char *input);
 
 //*----------------------------------------------*/
 //              src/parse/ft_getenv.c            //

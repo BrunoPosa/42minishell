@@ -6,11 +6,11 @@
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/22 15:08:47 by walnaimi          #+#    #+#             */
-/*   Updated: 2024/08/25 21:24:48 by walnaimi         ###   ########.fr       */
+/*   Updated: 2024/09/03 19:43:09 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/minishell.h"
+#include "minishell.h"
 
 /**
  * Searches for a specific token type within a linked list of tokens.
@@ -58,23 +58,16 @@ int	search_token_type(t_token *token, t_type type)
 	return (0);
 }
 
-/**
- * Checks if a string contains only alphabetic characters.
- *
- * @param str The string to check.
- *
- * @return 1 if the string contains only alphabetic characters, 0 otherwise.
- */
-int	ft_isalpha_str(const char *str)
+int	ft_isnum_str(const char *str)
 {
 	int	i;
 
 	i = 0;
 	while (str[i])
 	{
-		if (ft_isalpha(str[i]))
-			return (1);
+		if (!ft_isdigit(str[i]))
+			return (0);
 		i++;
 	}
-	return (0);
+	return (1);
 }

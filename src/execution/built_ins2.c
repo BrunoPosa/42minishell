@@ -5,145 +5,59 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/07/08 15:26:27 by fdessoy-          #+#    #+#             */
-/*   Updated: 2024/08/27 00:04:15 by walnaimi         ###   ########.fr       */
+/*   Created: 2024/07/08 15:26:27 by walnaimi          #+#    #+#             */
+/*   Updated: 2024/09/03 18:47:54 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/minishell.h"
+#include "minishell.h"
 
-void alphabetical_printer(char **env_array)
-{
-    char	c;
-	int		i;
-	
-	i = 0;
-    c = 32;
-    while (c < 127)
-    {
-        while (env_array[i])
-        {
-			//name = tmp->key;
-            if (env_array[i][0] == c)
-            {
-                printf("declare -x ");
-				printf("%s\n", env_array[i]);
-            }
-			i++;
-        }
-		i = 0;
-        c++;
-    }
-}
-
-/* export puts variables declared by user in the env */
-int	export(t_token *token, t_env **env_ll)
-{
-	t_token *tmp_tok;
-	t_env	*tmp_ll;
-	char	**array;
-
-	if (find_token(token, APPEND)
-	|| find_token(token, HERE_DOC)
-	|| find_token(token, RED_IN)
-	|| find_token(token, RED_OUT))
-		return (SUCCESS);
-	if (token->next->value == NULL)
-	{
-		print_export(env_ll);
-		return (SUCCESS);
-	}
-	token = token->next;
-	tmp_tok = token;
-	while (tmp_tok->next != NULL)
-	{
-		int found = 0;
-		tmp_ll = (*env_ll);
-		while (tmp_ll != NULL)
-		{
-			array = ft_split(tmp_tok->value, '=');
-			if (!array)
-				return (FAILURE);
-			if (!ft_strncmp(tmp_ll->key, array[0], ft_strlen(tmp_ll->key)))
-			{
-				found = 1;
-				free_array(array);
-				break;
-			}
-			free_array(array);
-			tmp_ll = tmp_ll->next;
-		}
-		if (found)
-		{
-			free_null(tmp_ll->value);
-			free_null(tmp_ll->key);
-			free_null(tmp_ll->content);
-			tmp_ll->content = ft_strdup(tmp_tok->value);
-			array = ft_split(tmp_tok->value, '=');
-			tmp_ll->key = ft_strdup(array[0]);
-			if (!tmp_ll)
-			{
-				free_array(array);
-				return (FAILURE);
-			}
-			tmp_ll->value = ft_strdup(ft_strchr(tmp_tok->value, '='));
-			if (!tmp_ll->value)
-			{
-				free_array(array);
-				free_null(tmp_ll->key);
-				return (FAILURE);
-			}
-			free_array(array);
-		}
-		else
-		{
-			ft_listadd_back(env_ll, ft_listnew(tmp_tok->value));
-		}
-		tmp_tok = tmp_tok->next;
-	}
-	return (SUCCESS);
-}
-
-// when someone types EXPORT only, it prints all env variables
-// IN ALPHABETICAL ORDER!!! <- still needs to be implemented (not really necessary)
-int	print_export(t_env **env_ll)
-{
-	char	**env_array;
-
-	if (!env_ll || !*env_ll)
-		return (SUCCESS);
-	env_array = env_arr_updater(env_ll);
-	if (!env_array)
-		return (SUCCESS);
-	alphabetical_printer(env_array);
-	free_array(env_array);
-	return (SUCCESS);
-}
-
-/* this function unsets whatever argument given after unset in the command line */
-int	unset(t_token *token, t_env **env_ll)
+/**
+ * Deletes the first node in the linked list of environment variables if its
+ * content matches the value of the given token.
+ *
+ * @param env_ll A pointer to the 
+ * head of the linked list of environment variables.
+ * @param head The token whose value is to be compared with the content of the
+ * first node.
+ * @param data A structure containing the program's global data.
+ *
+ * @return 1 if the first node was deleted, 0 otherwise.
+ */
+int	delete_first_node(t_env **env_ll, t_token *head, t_data *data)
 {
 	t_env	*tmp;
-	t_env	*del;
-	t_token	*head;
 
-	head = token;
-	if (!head->next->value || !*env_ll || !env_ll)
-		return (SUCCESS);
 	tmp = *env_ll;
-	head = head->next;
-	while (!ft_strncmp(head->value, tmp->content, ft_strlen(head->value)))
+	if (tmp && !ft_strncmp(head->value, tmp->content, ft_strlen(head->value)))
 	{
-		tmp = tmp->next;
+		*env_ll = tmp->next;
+		data->envll = *env_ll;
 		free_null(tmp->key);
 		free_null(tmp->value);
 		free_null(tmp->content);
 		free(tmp);
-		tmp = NULL;
-		return (SUCCESS);
+		return (1);
 	}
-	tmp = *env_ll;
-	while (tmp->next != NULL)
+	return (0);
+}
+
+/**
+ * Deletes subsequent nodes in the linked list of environment variables if their
+ * content matches the value of the given token.
+ *
+ * @param env_ll A pointer to the head 
+ * of the linked list of environment variables.
+ * @param head The token whose value is to be compared with the content of the
+ * subsequent nodes.
+ */
+void	delete_subsequent_nodes(t_env *env_ll, t_token *head)
+{
+	t_env	*tmp;
+	t_env	*del;
+
+	tmp = env_ll;
+	while (tmp != NULL && tmp->next != NULL)
 	{
 		if (!ft_strncmp(head->value, tmp->next->content,
 				ft_strlen(head->value)))
@@ -154,75 +68,66 @@ int	unset(t_token *token, t_env **env_ll)
 			free_null(del->value);
 			free_null(del->content);
 			free(del);
-			del = NULL;
-			return (SUCCESS);
+			break ;
 		}
 		tmp = tmp->next;
 	}
-	//*env_ll = tmp;
-	tmp = NULL;
-	head = NULL;
+}
+
+/**
+ * The unset built-in removes the given 
+ * environment variables from the environment.
+ *
+ * The unset built-in takes multiple arguments, each of which is a name of an
+ * environment variable. If the environment variable does not exist, the command
+ * silently ignores it. If the environment
+ *  variable exists, it is removed from the
+ * environment.
+ *
+ * @param token The token containing the command and its arguments.
+ * @param env_ll A pointer to the head of 
+ * the linked list of environment variables.
+ * @param data A structure containing the program's global data.
+ *
+ * @return 0 on success, -1 on failure.
+ */
+int	unset(t_token *token, t_env **env_ll, t_data *data)
+{
+	t_token	*head;
+
+	head = token->next;
+	while (head && head->value)
+	{
+		if (delete_first_node(env_ll, head, data))
+		{
+			head = head->next;
+			continue ;
+		}
+		delete_subsequent_nodes(*env_ll, head);
+		head = head->next;
+	}
 	return (SUCCESS);
 }
 
-
-// {
-// 	t_env	*tmp;
-// 	char	**exp_list;
-// 	int		count;
-// 	t_token	*head;
-
-// 	head = token;
-// 	count = 0;
-// 	if (!head->next->value)
-// 	{
-// 		print_export(env_ll);
-// 		return (SUCCESS);
-// 	}
-// 	head = token->next;
-// 	if(head->value[0] >= '0' && head->value[0] <= '9')
-// 		return(err_msg(head->value,ERR_EXP,FAILURE));
-// 	tmp = (*env_ll);
-// 	while (head != NULL)
-// 	{
-// 		while (tmp)
-// 		{
-// 			if (ft_strncmp(tmp->key, head->value, ft_strlen(tmp->key)) == 0)
-// 			{
-// 				free(tmp->content);
-// 				free(tmp->value);
-// 				tmp->content = ft_strdup(head->value);
-// 				tmp->value = ft_substr(head->value, ft_strlen(tmp->key) + 1, ft_strlen(head->value) - ft_strlen(tmp->key)); 
-// 				return (SUCCESS);
-// 			}
-// 			tmp = tmp->next;
-// 		}
-		
-// 		head = head->next;
-// 		count++;
-// 	}
-// 	exp_list = (char **)malloc(sizeof(char *) * (count + 1));
-// 	if (!exp_list)
-// 		return (FAILURE);
-// 	head = token->next;
-// 	i = 0;
-// 	while (head != NULL)
-// 	{
-// 		if (head->value != NULL)
-// 			exp_list[i++] = ft_strdup(head->value);
-// 		head = head->next;
-// 	}
-// 	exp_list[i] = NULL;
-// 	i = 0;
-// 	tmp = (*env_ll);
-// 	if (!*env_ll)
-// 		(*env_ll) = ft_listnew(exp_list[i++]);
-// 	i = 0;
-// 	while (exp_list[i])
-// 		ft_listadd_back(env_ll, ft_listnew(exp_list[i++]));
-// 	(*env_ll) = tmp;
-// 	tmp = NULL;
-// 	free_array(exp_list);
-// 	return (SUCCESS);
-// }
-
+int	handle_non_builtin(t_token *token)
+{
+	if (ft_strncmp(token->value, ".", 2) == 0)
+	{
+		ft_putstr_fd(token->value, 2);
+		ft_putendl_fd(": bro forgot an argument 🤣", 2);
+		return (2);
+	}
+	if (token->value[0] != '\0'
+		|| (token->value[0] == '\0' && token->in_q == true))
+	{
+		if (ft_strlen(token->value) > 0)
+		{
+			ft_putstr_fd(token->value, 2);
+			ft_putendl_fd(": command not found 🙄", 2);
+			return (127);
+		}
+		ft_putendl_fd("(NULL): command not found 🙄", 2);
+		return (127);
+	}
+	return (0);
+}

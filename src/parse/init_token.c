@@ -5,12 +5,12 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/07/15 17:34:04 by fdessoy-          #+#    #+#             */
-/*   Updated: 2024/08/23 14:18:13 by walnaimi         ###   ########.fr       */
+/*   Created: 2024/07/15 17:34:04 by walnaimi          #+#    #+#             */
+/*   Updated: 2024/09/03 18:47:54 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/minishell.h"
+#include "minishell.h"
 
 /**
  * Initializes a new token.

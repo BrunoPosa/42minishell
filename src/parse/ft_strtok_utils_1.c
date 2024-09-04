@@ -6,11 +6,11 @@
 /*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/23 00:32:24 by walnaimi          #+#    #+#             */
-/*   Updated: 2024/08/25 01:22:00 by walnaimi         ###   ########.fr       */
+/*   Updated: 2024/09/03 18:57:52 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/minishell.h"
+#include "minishell.h"
 
 /**
  * Checks if a character exists in a given string.

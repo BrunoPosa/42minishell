@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   freeing.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bposa <bposa@student.hive.fi>              +#+  +:+       +#+        */
+/*   By: walnaimi <walnaimi@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/22 22:21:18 by bposa             #+#    #+#             */
-/*   Updated: 2024/08/25 19:14:28 by bposa            ###   ########.fr       */
+/*   Updated: 2024/09/03 18:56:23 by walnaimi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/minishell.h"
+#include "minishell.h"
 
 void	free_my_boi(char **paths)
 {
@@ -45,33 +45,12 @@ void	free_tokens(t_token *head)
 	{
 		tmp = head;
 		if (tmp->value)
-		{
 			free_null(tmp->value);
-			tmp->value = NULL;
-		}
 		if (tmp->path)
 			free_null(tmp->path);
 		head = head->next;
 		free_null(tmp);
 	}
-}
-
-void	*free_arr_retnull(char **array)
-{
-	int	i;
-
-	i = 0;
-	if (!array)
-		return (NULL);
-	while (array[i])
-	{
-		free(array[i]);
-		array[i] = NULL;
-		i++;
-	}
-	free(array);
-	array = NULL;
-	return (NULL);
 }
 
 int	free_retstatus(char *array, int status)
